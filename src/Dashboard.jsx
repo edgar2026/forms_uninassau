@@ -50,6 +50,7 @@ export default function Dashboard() {
     curso: '',
     periodo: '',
     sexo: '',
+    faixaEtaria: '',
     cidadeMoradia: '',
     bairro: '',
     cidadeEscola: '',
@@ -102,6 +103,7 @@ export default function Dashboard() {
       curso: '',
       periodo: '',
       sexo: '',
+      faixaEtaria: '',
       cidadeMoradia: '',
       bairro: '',
       cidadeEscola: '',
@@ -122,6 +124,7 @@ export default function Dashboard() {
       cursos: getUnique('curso'),
       periodos: getUnique('periodo'),
       sexos: getUnique('sexo'),
+      faixasEtarias: getUnique('faixa_etaria'),
       cidadesMoradia: getUnique('cidade_moradia'),
       bairros: getUnique('bairro'),
       cidadesEscola: getUnique('cidade_escola'),
@@ -148,6 +151,7 @@ export default function Dashboard() {
       if (filters.curso && item.curso !== filters.curso) return false;
       if (filters.periodo && item.periodo !== filters.periodo) return false;
       if (filters.sexo && item.sexo !== filters.sexo) return false;
+      if (filters.faixaEtaria && item.faixa_etaria !== filters.faixaEtaria) return false;
       if (filters.cidadeMoradia && item.cidade_moradia !== filters.cidadeMoradia) return false;
       if (filters.bairro && item.bairro !== filters.bairro) return false;
       if (filters.cidadeEscola && item.cidade_escola !== filters.cidadeEscola) return false;
@@ -217,6 +221,7 @@ export default function Dashboard() {
       byCurso: countBy('curso'),
       byPeriodo: countBy('periodo'),
       bySexo: countBy('sexo'),
+      byFaixaEtaria: countBy('faixa_etaria'),
       byCidadeMoradia: countBy('cidade_moradia'),
       byBairro: countBy('bairro').slice(0, 10),
       byCidadeEscola: countBy('cidade_escola'),
@@ -265,6 +270,7 @@ export default function Dashboard() {
       'Matrícula',
       'Nome Completo',
       'Sexo',
+      'Faixa Etária',
       'Curso',
       'Curso (Outro)',
       'Período',
@@ -295,6 +301,7 @@ export default function Dashboard() {
       escapeCSV(item.matricula),
       escapeCSV(item.nome_completo),
       escapeCSV(item.sexo),
+      escapeCSV(item.faixa_etaria || ''),
       escapeCSV(item.curso),
       escapeCSV(item.outro_curso || ''),
       escapeCSV(item.periodo),
@@ -453,6 +460,17 @@ export default function Dashboard() {
                   >
                     <option value="">Todos</option>
                     {filterOptions.sexos.map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </div>
+
+                <div className="db-field">
+                  <label>Faixa Etária</label>
+                  <select
+                    value={filters.faixaEtaria}
+                    onChange={e => handleFilterChange('faixaEtaria', e.target.value)}
+                  >
+                    <option value="">Todas</option>
+                    {filterOptions.faixasEtarias.map(f => <option key={f} value={f}>{f}</option>)}
                   </select>
                 </div>
 
@@ -672,6 +690,30 @@ export default function Dashboard() {
                             </div>
                             <div className="db-bar-track">
                               <div className="db-bar-fill db-bar-fill-teal" style={{ width: `${pct}%` }} />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Respostas por Faixa Etária */}
+                  <div className="db-card db-chart-card">
+                    <div className="db-chart-header">
+                      <Users size={18} />
+                      <h4>Respostas por Faixa Etária</h4>
+                    </div>
+                    <div className="db-bar-list">
+                      {distributions.byFaixaEtaria.map(([name, count]) => {
+                        const pct = Math.round((count / metrics.total) * 100);
+                        return (
+                          <div key={name} className="db-bar-item">
+                            <div className="db-bar-label">
+                              <span>{name}</span>
+                              <strong>{count} ({pct}%)</strong>
+                            </div>
+                            <div className="db-bar-track">
+                              <div className="db-bar-fill db-bar-fill-purple" style={{ width: `${pct}%` }} />
                             </div>
                           </div>
                         );
@@ -924,6 +966,7 @@ export default function Dashboard() {
                             <th>Matrícula</th>
                             <th>Nome Completo</th>
                             <th>Sexo</th>
+                            <th>Faixa Etária</th>
                             <th>Curso</th>
                             <th>Período</th>
                             <th>Cidade Moradia</th>
@@ -942,6 +985,7 @@ export default function Dashboard() {
                               <td className="bold">{row.matricula}</td>
                               <td>{row.nome_completo}</td>
                               <td>{row.sexo}</td>
+                              <td>{row.faixa_etaria || 'Não informado'}</td>
                               <td>
                                 {row.curso}
                                 {row.outro_curso && <small className="db-subtext"> ({row.outro_curso})</small>}

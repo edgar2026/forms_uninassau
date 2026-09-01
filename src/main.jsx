@@ -50,10 +50,19 @@ const channels = [
   'Já conhecia a UNINASSAU',
   'Outro canal'
 ];
+const ageRanges = [
+  '17 a 22 anos',
+  '23 a 27 anos',
+  '28 a 34 anos',
+  '35 a 44 anos',
+  '45 a 59 anos',
+  '60 anos ou mais'
+];
 const empty = {
   matricula: '',
   nomeCompleto: '',
   sexo: '',
+  faixaEtaria: '',
   course: '',
   otherCourse: '',
   period: '',
@@ -199,9 +208,10 @@ function App() {
   const nomeParts = form.nomeCompleto.trim().split(/\s+/).filter(Boolean);
   const nomeValid = nomeParts.length >= 2 && !/^\d+$/.test(form.nomeCompleto.trim());
   const sexoValid = form.sexo !== '';
+  const faixaEtariaValid = form.faixaEtaria !== '';
 
   const valid = [
-    matriculaValid && nomeValid && sexoValid,
+    matriculaValid && nomeValid && sexoValid && faixaEtariaValid,
     form.course && form.period && (form.course !== 'Meu curso não está na lista' || form.otherCourse),
     form.homeCity && (form.homeCity === 'Outra cidade' ? form.otherHomeCity && form.otherNeighborhood : form.neighborhood && (form.neighborhood !== 'Meu bairro não está na lista' || form.otherNeighborhood)),
     form.schoolCity && form.schoolCategory && (form.schoolCity === 'Outra cidade' ? form.otherSchoolCity && form.otherSchool : form.schoolName && (form.schoolName !== '__manual__' || form.otherSchool)),
@@ -217,6 +227,7 @@ function App() {
     ['Matrícula', form.matricula],
     ['Nome completo', form.nomeCompleto],
     ['Sexo', form.sexo],
+    ['Faixa etária', form.faixaEtaria],
     ['Curso', form.course === 'Meu curso não está na lista' ? form.otherCourse : form.course],
     ['Período', form.period],
     ['Cidade', form.homeCity === 'Outra cidade' ? form.otherHomeCity : form.homeCity],
@@ -242,6 +253,7 @@ function App() {
         matricula: form.matricula.trim(),
         nome_completo: form.nomeCompleto.trim(),
         sexo: form.sexo,
+        faixa_etaria: form.faixaEtaria,
         curso: form.course === 'Meu curso não está na lista' ? form.otherCourse.trim() : form.course,
         outro_curso: form.course === 'Meu curso não está na lista' ? form.otherCourse.trim() : null,
         periodo: form.period,
@@ -360,6 +372,7 @@ function App() {
                 <Text label="Matrícula" value={form.matricula} onChange={v => set('matricula', v.replace(/\s/g, '').replace(/[^0-9]/g, ''))} placeholder="Digite sua matrícula" />
                 <Text label="Nome completo" value={form.nomeCompleto} onChange={v => set('nomeCompleto', v.replace(/\s+/g, ' '))} placeholder="Digite seu nome completo" />
                 <Select label="Sexo" value={form.sexo} onChange={v => set('sexo', v)} options={['Feminino', 'Masculino', 'Prefiro não informar']} />
+                <Select label="Faixa etária" value={form.faixaEtaria} onChange={v => set('faixaEtaria', v)} options={ageRanges} />
               </>
             )}
 
