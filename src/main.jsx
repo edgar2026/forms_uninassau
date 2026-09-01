@@ -267,12 +267,14 @@ function App() {
 
       if (error) {
         console.error('Erro no Supabase:', error);
-        if (error.code === '23505' || (error.message && error.message.includes('unique'))) {
+        const isDuplicate = error.code === '23505' ||
+                            error.status === 409 ||
+                            (error.message && (error.message.includes('unique') || error.message.includes('duplicate') || error.message.includes('23505')));
+        if (isDuplicate) {
           setSubmitError('Já existe uma resposta registrada para esta matrícula.');
         } else {
           setSubmitError('Ocorreu um erro ao enviar sua resposta. Tente novamente.');
         }
-        setSubmitting(false);
         return;
       }
 
@@ -281,6 +283,7 @@ function App() {
     } catch (e) {
       console.error('Erro inesperado no envio:', e);
       setSubmitError('Ocorreu um erro ao enviar sua resposta. Tente novamente.');
+    } finally {
       setSubmitting(false);
     }
   };
@@ -487,22 +490,23 @@ function App() {
             )}
 
             {step === 5 && (
-              <div className="review">
-                {review.map(([k, v]) => (
-                  <div key={k}>
-                    <small>{k}</small>
-                    <strong>{v || 'Não informado'}</strong>
+              <>
+                <div className="review">
+                  {review.map(([k, v]) => (
+                    <div key={k}>
+                      <small>{k}</small>
+                      <strong>{v || 'Não informado'}</strong>
+                    </div>
+                  ))}
+                </div>
+                {submitError && (
+                  <div style={{ marginTop: '16px', padding: '12px 16px', background: '#fef2f2', border: '1px solid #fecaca', color: '#991b1b', borderRadius: '12px', fontSize: '14px', fontWeight: '600' }}>
+                    {submitError}
                   </div>
-                ))}
-              </div>
+                )}
+              </>
             )}
           </article>
-
-          {submitError && (
-            <div style={{ marginTop: '16px', padding: '12px 16px', background: '#fef2f2', border: '1px solid #fecaca', color: '#991b1b', borderRadius: '12px', fontSize: '14px', fontWeight: '600' }}>
-              {submitError}
-            </div>
-          )}
 
           <footer>
             <button className="secondary" disabled={step === 0 || submitting} onClick={() => setStep(x => x - 1)}>
