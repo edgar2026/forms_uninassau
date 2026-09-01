@@ -7,7 +7,7 @@ import './styles.css';
 
 const isCreche = (nome) => /CRECHE|\bCMEI\b|\bINFANTIL\b|\bMATERNAL\b|BERÇ?ARIO|JARDIM DE INF/i.test(nome);
 
-const cities = ['Recife', 'Jaboatão dos Guararapes', 'Olinda', 'Outra cidade'];
+
 const courses = [
   'Administração',
   'Análise e Desenvolvimento de Sistemas',
@@ -158,6 +158,24 @@ function App() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  const homeCities = useMemo(() => {
+    if (!escolasData) return [];
+    const cidades = Object.keys(escolasData.bairros).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+    return [...cidades, 'Outra cidade'];
+  }, [escolasData]);
+
+  const schoolCities = useMemo(() => {
+    if (!escolasData) return [];
+    const cidades = Object.keys(escolasData.escolas)
+      .filter(cidade => {
+        const publicas = escolasData.escolas[cidade]?.['Pública'] || [];
+        const privadas = escolasData.escolas[cidade]?.['Privada'] || [];
+        return publicas.length > 0 || privadas.length > 0;
+      })
+      .sort((a, b) => a.localeCompare(b, 'pt-BR'));
+    return [...cidades, 'Outra cidade'];
+  }, [escolasData]);
 
   const nopts = useMemo(() => {
     if (!escolasData || !form.homeCity || form.homeCity === 'Outra cidade') return [];
@@ -388,7 +406,7 @@ function App() {
 
             {step === 2 && (
               <>
-                <Select label="Em qual cidade você mora?" value={form.homeCity} onChange={v => { set('homeCity', v); set('neighborhood', ''); }} options={cities} />
+                <Select label="Em qual cidade você mora?" value={form.homeCity} onChange={v => { set('homeCity', v); set('neighborhood', ''); }} options={homeCities} disabled={escolasLoading} />
                 {form.homeCity === 'Outra cidade' ? (
                   <>
                     <Text label="Digite a cidade" value={form.otherHomeCity} onChange={v => set('otherHomeCity', v)} />
@@ -407,7 +425,7 @@ function App() {
 
             {step === 3 && (
               <>
-                <Select label="Cidade da escola onde concluiu o Ensino Médio" value={form.schoolCity} onChange={handleSchoolCityChange} options={cities} />
+                <Select label="Cidade da escola onde concluiu o Ensino Médio" value={form.schoolCity} onChange={handleSchoolCityChange} options={schoolCities} disabled={escolasLoading} />
                 {form.schoolCity === 'Outra cidade' ? (
                   <>
                     <Text label="Digite a cidade da escola" value={form.otherSchoolCity} onChange={v => set('otherSchoolCity', v)} />
