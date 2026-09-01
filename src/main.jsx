@@ -1,9 +1,11 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import { CheckCircle2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { supabase } from './supabase';
 import Dashboard from './Dashboard';
 import './styles.css';
+
+const isCreche = (nome) => /CRECHE|\bCMEI\b|\bINFANTIL\b|\bMATERNAL\b|BERÇ?ARIO|JARDIM DE INF/i.test(nome);
 
 const cities = ['Recife', 'Jaboatão dos Guararapes', 'Olinda', 'Outra cidade'];
 const courses = [
@@ -116,6 +118,8 @@ function App() {
   const [displayLimit, setDisplayLimit] = useState(50);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
+  const [showSchoolDropdown, setShowSchoolDropdown] = useState(false);
+  const autocompleteRef = useRef(null);
 
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }));
 
@@ -136,6 +140,16 @@ function App() {
       });
   }, []);
 
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (autocompleteRef.current && !autocompleteRef.current.contains(event.target)) {
+        setShowSchoolDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const nopts = useMemo(() => {
     if (!escolasData || !form.homeCity || form.homeCity === 'Outra cidade') return [];
     const l = [...(escolasData.bairros[form.homeCity] || [])];
@@ -148,9 +162,10 @@ function App() {
     if (!escolasData || !form.schoolCity || form.schoolCity === 'Outra cidade' || !form.schoolCategory) return [];
     const cat = form.schoolCategory === 'Pública' ? 'Pública' : 'Privada';
     const lista = (escolasData.escolas[form.schoolCity] && escolasData.escolas[form.schoolCity][cat]) || [];
-    if (!search) return lista;
+    const semCreches = lista.filter(e => !isCreche(e.nome));
+    if (!search) return semCreches;
     const ns = normalizeStr(search);
-    return lista.filter(e => normalizeStr(e.nome).includes(ns));
+    return semCreches.filter(e => normalizeStr(e.nome).includes(ns));
   }, [escolasData, form.schoolCity, form.schoolCategory, search]);
 
   const baseOpts = useMemo(() => {
@@ -289,10 +304,10 @@ function App() {
   const titles = ['Identificação', 'Identificação acadêmica', 'Onde você mora', 'Sua escola de origem', 'Sua escolha pela UNINASSAU', 'Revise suas respostas'];
 
   const handleSchoolCityChange = v => {
-    set('schoolCity', v); set('schoolCategory', ''); set('schoolName', ''); set('schoolNetwork', ''); set('schoolStatus', ''); set('otherSchool', ''); setSearch('');
+    set('schoolCity', v); set('schoolCategory', ''); set('schoolName', ''); set('schoolNetwork', ''); set('schoolStatus', ''); set('otherSchool', ''); setSearch(''); setShowSchoolDropdown(false);
   };
   const handleSchoolCategoryChange = v => {
-    set('schoolCategory', v); set('schoolName', ''); set('schoolNetwork', ''); set('schoolStatus', ''); set('otherSchool', ''); setSearch('');
+    set('schoolCategory', v); set('schoolName', ''); set('schoolNetwork', ''); set('schoolStatus', ''); set('otherSchool', ''); setSearch(''); setShowSchoolDropdown(false);
   };
   const handleSchoolSelect = v => {
     if (v === '__manual__') { set('schoolName', '__manual__'); set('schoolNetwork', ''); set('schoolStatus', ''); }
@@ -388,24 +403,65 @@ function App() {
                     <Select label="A escola era" value={form.schoolCategory} onChange={handleSchoolCategoryChange} options={['Pública', 'Privada']} />
                     {form.schoolCategory && (
                       <>
-                        {escolasLoading ? (
-                          <label className="field"><span>Pesquisar escola</span><input value="" disabled placeholder="Carregando escolas..." /></label>
-                        ) : escolasError ? (
-                          <label className="field"><span>Pesquisar escola</span><input value="" disabled placeholder="Não foi possível carregar a lista de escolas. Você pode informar a escola manualmente." /></label>
-                        ) : (
-                          <Text label="Pesquisar escola" value={search} onChange={v => setSearch(v)} placeholder="Digite parte do nome da escola" />
-                        )}
-
-                        {!escolasLoading && !escolasError && form.schoolCategory && (
-                          <label className="field">
-                            <span>Selecione sua escola</span>
-                            <select value={form.schoolName || ''} onChange={e => handleSchoolSelect(e.target.value)}>
-                              <option value="" disabled>Selecione uma opção</option>
-                              {schoolOpts.map(e => <option key={e.nome} value={e.nome}>{e.nome} — {e.rede}</option>)}
-                              <option value="__manual__">Minha escola não está na lista</option>
-                            </select>
+                        <div className="autocomplete-container" ref={autocompleteRef}>
+                          <label className="field" style={{ marginBottom: 0 }}>
+                            <span>Digite ou selecione o nome da sua escola</span>
+                            <input
+                              type="text"
+                              placeholder="Comece a digitar o nome da escola..."
+                              value={search}
+                              onFocus={() => setShowSchoolDropdown(true)}
+                              onChange={e => {
+                                setSearch(e.target.value);
+                                setShowSchoolDropdown(true);
+                                if (form.schoolName) {
+                                  set('schoolName', '');
+                                  set('schoolNetwork', '');
+                                }
+                              }}
+                            />
                           </label>
-                        )}
+
+                          {showSchoolDropdown && (
+                            <div className="autocomplete-menu">
+                              {escolasLoading ? (
+                                <div className="autocomplete-item">Carregando escolas...</div>
+                              ) : escolasError ? (
+                                <div className="autocomplete-item">Não foi possível carregar a lista.</div>
+                              ) : (
+                                <>
+                                  {schoolOpts.map(e => (
+                                    <div
+                                      key={e.nome}
+                                      className={`autocomplete-item ${form.schoolName === e.nome ? 'selected' : ''}`}
+                                      onClick={() => {
+                                        set('schoolName', e.nome);
+                                        set('schoolNetwork', e.rede);
+                                        set('otherSchool', '');
+                                        setSearch(e.nome);
+                                        setShowSchoolDropdown(false);
+                                      }}
+                                    >
+                                      <span className="autocomplete-item-name">{e.nome}</span>
+                                      {e.rede && <span className="autocomplete-item-badge">{e.rede}</span>}
+                                    </div>
+                                  ))}
+                                  <div
+                                    className="autocomplete-item autocomplete-item-manual"
+                                    onClick={() => {
+                                      set('schoolName', '__manual__');
+                                      set('schoolNetwork', '');
+                                      setSearch('Minha escola não está na lista');
+                                      setShowSchoolDropdown(false);
+                                    }}
+                                  >
+                                    + Minha escola não está na lista
+                                  </div>
+                                </>
+                              )}
+                            </div>
+                          )}
+                        </div>
 
                         {form.schoolName === '__manual__' && (
                           <Text label="Digite o nome completo da escola" value={form.otherSchool} onChange={v => set('otherSchool', v)} />
