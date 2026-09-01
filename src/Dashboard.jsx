@@ -14,6 +14,8 @@ import {
   FileSpreadsheet,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
   X,
   CheckCircle2
 } from 'lucide-react';
@@ -42,6 +44,7 @@ export default function Dashboard() {
   const [error, setError] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
   const [logoError, setLogoError] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
 
   // Filters state
   const [filters, setFilters] = useState({
@@ -399,158 +402,184 @@ export default function Dashboard() {
           <>
             {/* Filters Section */}
             <section className="db-card db-filters-card">
-              <div className="db-filters-header">
+              <div
+                className="db-filters-header"
+                style={{ cursor: 'pointer', marginBottom: showFilters ? '20px' : 0, paddingBottom: showFilters ? '12px' : 0, borderBottom: showFilters ? '1px solid #f1f5f9' : 'none' }}
+                onClick={() => setShowFilters(!showFilters)}
+              >
                 <div className="db-filters-title">
                   <Filter size={18} />
                   <h3>Filtros de Pesquisa</h3>
+                  {Object.values(filters).filter(Boolean).length > 0 && (
+                    <span className="db-badge" style={{ background: '#fef3c7', color: '#92400e' }}>
+                      {Object.values(filters).filter(Boolean).length} ativo{Object.values(filters).filter(Boolean).length > 1 ? 's' : ''}
+                    </span>
+                  )}
                 </div>
-                {hasActiveFilters && (
-                  <button onClick={handleClearFilters} className="db-btn-text">
-                    <X size={14} /> Limpar filtros
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  {hasActiveFilters && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleClearFilters(); }}
+                      className="db-btn-text"
+                    >
+                      <X size={14} /> Limpar
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    className="db-btn db-btn-sm"
+                    style={{ background: '#f1f5f9', color: '#475569' }}
+                    onClick={(e) => { e.stopPropagation(); setShowFilters(!showFilters); }}
+                  >
+                    <span>{showFilters ? 'Ocultar filtros' : 'Filtrar dados'}</span>
+                    {showFilters ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                   </button>
-                )}
-              </div>
-
-              <div className="db-filters-grid">
-                <div className="db-field">
-                  <label>Data inicial</label>
-                  <input
-                    type="date"
-                    value={filters.startDate}
-                    onChange={e => handleFilterChange('startDate', e.target.value)}
-                  />
-                </div>
-
-                <div className="db-field">
-                  <label>Data final</label>
-                  <input
-                    type="date"
-                    value={filters.endDate}
-                    onChange={e => handleFilterChange('endDate', e.target.value)}
-                  />
-                </div>
-
-                <div className="db-field">
-                  <label>Curso</label>
-                  <select
-                    value={filters.curso}
-                    onChange={e => handleFilterChange('curso', e.target.value)}
-                  >
-                    <option value="">Todos os cursos</option>
-                    {filterOptions.cursos.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
-                </div>
-
-                <div className="db-field">
-                  <label>Período</label>
-                  <select
-                    value={filters.periodo}
-                    onChange={e => handleFilterChange('periodo', e.target.value)}
-                  >
-                    <option value="">Todos os períodos</option>
-                    {filterOptions.periodos.map(p => <option key={p} value={p}>{p}</option>)}
-                  </select>
-                </div>
-
-                <div className="db-field">
-                  <label>Sexo</label>
-                  <select
-                    value={filters.sexo}
-                    onChange={e => handleFilterChange('sexo', e.target.value)}
-                  >
-                    <option value="">Todos</option>
-                    {filterOptions.sexos.map(s => <option key={s} value={s}>{s}</option>)}
-                  </select>
-                </div>
-
-                <div className="db-field">
-                  <label>Faixa Etária</label>
-                  <select
-                    value={filters.faixaEtaria}
-                    onChange={e => handleFilterChange('faixaEtaria', e.target.value)}
-                  >
-                    <option value="">Todas</option>
-                    {filterOptions.faixasEtarias.map(f => <option key={f} value={f}>{f}</option>)}
-                  </select>
-                </div>
-
-                <div className="db-field">
-                  <label>Cidade de Moradia</label>
-                  <select
-                    value={filters.cidadeMoradia}
-                    onChange={e => handleFilterChange('cidadeMoradia', e.target.value)}
-                  >
-                    <option value="">Todas as cidades</option>
-                    {filterOptions.cidadesMoradia.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
-                </div>
-
-                <div className="db-field">
-                  <label>Bairro</label>
-                  <select
-                    value={filters.bairro}
-                    onChange={e => handleFilterChange('bairro', e.target.value)}
-                  >
-                    <option value="">Todos os bairros</option>
-                    {filterOptions.bairros.map(b => <option key={b} value={b}>{b}</option>)}
-                  </select>
-                </div>
-
-                <div className="db-field">
-                  <label>Cidade da Escola</label>
-                  <select
-                    value={filters.cidadeEscola}
-                    onChange={e => handleFilterChange('cidadeEscola', e.target.value)}
-                  >
-                    <option value="">Todas as cidades</option>
-                    {filterOptions.cidadesEscola.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
-                </div>
-
-                <div className="db-field">
-                  <label>Categoria da Escola</label>
-                  <select
-                    value={filters.categoriaEscola}
-                    onChange={e => handleFilterChange('categoriaEscola', e.target.value)}
-                  >
-                    <option value="">Todas</option>
-                    {filterOptions.categoriasEscola.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
-                </div>
-
-                <div className="db-field">
-                  <label>Escola de Origem</label>
-                  <select
-                    value={filters.escola}
-                    onChange={e => handleFilterChange('escola', e.target.value)}
-                  >
-                    <option value="">Todas as escolas</option>
-                    {filterOptions.escolas.map(e => <option key={e} value={e}>{e}</option>)}
-                  </select>
-                </div>
-
-                <div className="db-field">
-                  <label>Motivo da Escolha</label>
-                  <select
-                    value={filters.motivoEscolha}
-                    onChange={e => handleFilterChange('motivoEscolha', e.target.value)}
-                  >
-                    <option value="">Todos os motivos</option>
-                    {filterOptions.motivos.map(m => <option key={m} value={m}>{m}</option>)}
-                  </select>
-                </div>
-
-                <div className="db-field">
-                  <label>Canal de Conhecimento</label>
-                  <select
-                    value={filters.canalConhecimento}
-                    onChange={e => handleFilterChange('canalConhecimento', e.target.value)}
-                  >
-                    <option value="">Todos os canais</option>
-                    {filterOptions.canais.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
                 </div>
               </div>
+
+              {showFilters && (
+                <div className="db-filters-grid">
+                  <div className="db-field">
+                    <label>Data inicial</label>
+                    <input
+                      type="date"
+                      value={filters.startDate}
+                      onChange={e => handleFilterChange('startDate', e.target.value)}
+                    />
+                  </div>
+
+                  <div className="db-field">
+                    <label>Data final</label>
+                    <input
+                      type="date"
+                      value={filters.endDate}
+                      onChange={e => handleFilterChange('endDate', e.target.value)}
+                    />
+                  </div>
+
+                  <div className="db-field">
+                    <label>Curso</label>
+                    <select
+                      value={filters.curso}
+                      onChange={e => handleFilterChange('curso', e.target.value)}
+                    >
+                      <option value="">Todos os cursos</option>
+                      {filterOptions.cursos.map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                  </div>
+
+                  <div className="db-field">
+                    <label>Período</label>
+                    <select
+                      value={filters.periodo}
+                      onChange={e => handleFilterChange('periodo', e.target.value)}
+                    >
+                      <option value="">Todos os períodos</option>
+                      {filterOptions.periodos.map(p => <option key={p} value={p}>{p}</option>)}
+                    </select>
+                  </div>
+
+                  <div className="db-field">
+                    <label>Sexo</label>
+                    <select
+                      value={filters.sexo}
+                      onChange={e => handleFilterChange('sexo', e.target.value)}
+                    >
+                      <option value="">Todos</option>
+                      {filterOptions.sexos.map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                  </div>
+
+                  <div className="db-field">
+                    <label>Faixa Etária</label>
+                    <select
+                      value={filters.faixaEtaria}
+                      onChange={e => handleFilterChange('faixaEtaria', e.target.value)}
+                    >
+                      <option value="">Todas</option>
+                      {filterOptions.faixasEtarias.map(f => <option key={f} value={f}>{f}</option>)}
+                    </select>
+                  </div>
+
+                  <div className="db-field">
+                    <label>Cidade de Moradia</label>
+                    <select
+                      value={filters.cidadeMoradia}
+                      onChange={e => handleFilterChange('cidadeMoradia', e.target.value)}
+                    >
+                      <option value="">Todas as cidades</option>
+                      {filterOptions.cidadesMoradia.map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                  </div>
+
+                  <div className="db-field">
+                    <label>Bairro</label>
+                    <select
+                      value={filters.bairro}
+                      onChange={e => handleFilterChange('bairro', e.target.value)}
+                    >
+                      <option value="">Todos os bairros</option>
+                      {filterOptions.bairros.map(b => <option key={b} value={b}>{b}</option>)}
+                    </select>
+                  </div>
+
+                  <div className="db-field">
+                    <label>Cidade da Escola</label>
+                    <select
+                      value={filters.cidadeEscola}
+                      onChange={e => handleFilterChange('cidadeEscola', e.target.value)}
+                    >
+                      <option value="">Todas as cidades</option>
+                      {filterOptions.cidadesEscola.map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                  </div>
+
+                  <div className="db-field">
+                    <label>Categoria da Escola</label>
+                    <select
+                      value={filters.categoriaEscola}
+                      onChange={e => handleFilterChange('categoriaEscola', e.target.value)}
+                    >
+                      <option value="">Todas</option>
+                      {filterOptions.categoriasEscola.map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                  </div>
+
+                  <div className="db-field">
+                    <label>Escola de Origem</label>
+                    <select
+                      value={filters.escola}
+                      onChange={e => handleFilterChange('escola', e.target.value)}
+                    >
+                      <option value="">Todas as escolas</option>
+                      {filterOptions.escolas.map(e => <option key={e} value={e}>{e}</option>)}
+                    </select>
+                  </div>
+
+                  <div className="db-field">
+                    <label>Motivo da Escolha</label>
+                    <select
+                      value={filters.motivoEscolha}
+                      onChange={e => handleFilterChange('motivoEscolha', e.target.value)}
+                    >
+                      <option value="">Todos os motivos</option>
+                      {filterOptions.motivos.map(m => <option key={m} value={m}>{m}</option>)}
+                    </select>
+                  </div>
+
+                  <div className="db-field">
+                    <label>Canal de Conhecimento</label>
+                    <select
+                      value={filters.canalConhecimento}
+                      onChange={e => handleFilterChange('canalConhecimento', e.target.value)}
+                    >
+                      <option value="">Todos os canais</option>
+                      {filterOptions.canais.map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                  </div>
+                </div>
+              )}
             </section>
 
             {/* Metrics Cards Grid */}
